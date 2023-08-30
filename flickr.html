@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>
+Story
+
+</title>
+<script src='storyjs/jquery-1.5.2.js' type='text/javascript'></script>
+<script src='storyjs/story/jquery-1.5-hack.js' type='text/javascript'></script>
+<script src='storyjs/story/layer.js' type='text/javascript'></script>
+<script src='storyjs/story/template.js' type='text/javascript'></script>
+<script src='storyjs/json2.js' type='text/javascript'></script>
+<script src='storyjs/story/story.js' type='text/javascript'></script>
+<script src='storyjs/story/plot.js' type='text/javascript'></script>
+<script src='md5.js' type='text/javascript'></script>
+
+<style type='text/css'>
+.screen,.screen>.content {
+  width: 640px;
+  height: 480px;
+}
+.screen { 
+  position: absolute;
+  left: 0px;
+  top: 0px;
+}
+.screen > .content { 
+  position: relative;
+}
+.dialog .title {
+  text-align: center;
+}
+.dialog {
+  position: absolute;
+  left: 40px;
+  top: 40px;
+  right: 40px;
+  bottom: 40px;
+  background: #999;
+  padding: 30px;
+  border-radius: 20px;
+  border: 10px solid gray;
+  -webkit-box-shadow: 2px 2px 5px black, 2px 2px 3px black inset; 
+}
+.dialog .dialog-buttons {
+  bottom: 20px;
+  right: 20px;
+  position: absolute;
+}
+.progress-bar .bar {
+  padding: 5px;
+}
+.progress-bar .full {
+  background-color: black;
+  height: 40px;
+  border-radius: 6px;
+}
+.progress-bar {
+  width: 500px;
+  height: 200px;
+  margin: 200px auto;
+  background: white;
+  border: 2px solid gray;
+  border-radius: 3px 5px;
+  color: black;
+}
+.message {
+  position: absolute;
+  left: 40px;
+  top: 40px;
+  right: 40px;
+  bottom: 40px;
+  background: #999;
+  padding: 30px;
+  border-radius: 20px;
+  border: 10px solid gray;
+  -webkit-box-shadow: 2px 2px 5px black, 2px 2px 3px black inset; 
+}
+
+</style>
+</head>
+<body>
+<div id='template' style='display:none'>
+<div class='screen'>
+<div class='content'></div>
+</div>
+<div class='dialog-template'>
+<div class='dialog'>
+<div class='title'>
+<span class='title-content'></span>
+</div>
+<div class='dialog-content'></div>
+<div class='dialog-buttons'>
+<button class='button'>.label</button>
+</div>
+</div>
+</div>
+<div class='basic-dialog'>
+<div class='title'></div>
+<div class='content'></div>
+</div>
+<div class='picture-dialog'>
+<div class='title'></div>
+<img class='content'>
+</div>
+<div class='progress-bar-template'>
+<div class='progress-bar'>
+<div class='title'></div>
+<div class='bar'>
+<div class='full'></div>
+</div>
+<button class='cancel'>Cancel</button>
+</div>
+</div>
+<div class='message-template'>
+<div class='message'></div>
+</div>
+<div class='image-loader'>
+<canvas></canvas>
+</div>
+<div class='empty'></div>
+<div class='flickr-photos'>
+<div class='photos'>
+<img class='photo'>
+</div>
+</div>
+
+</div>
+<div id='container'>
+<div id='content'>
+<div class='main-content'>
+<div class='template'></div>
+</div>
+
+</div>
+</div>
+</body>
+<script type='text/javascript'>
+$('#template .screen').defineTemplate('screen', {
+  '.content' : '%screen-content'
+});
+$('#template .dialog-template').defineTemplate('dialog-template', {
+  $template: Template.coalesce('.container', '=screen'),
+  $let : [{
+    data: '...dialog' 
+  }], 
+  '.dialog' : {
+    $as : 'screen-content',
+    $in : 'data',
+    '.dialog-frame' : {
+      '@style' : { 
+        width: Template.coalesce('.width', '=500'), 
+        height: Template.coalesce('.height', '=200'),
+        padding: Template.coalesce('.padding', '=15'),
+        'box-shadow' : '=3px 3px 5px #333, 2px 2px 3px #333 inset'
+      }
+    },
+    '.dialog-content' : '%content',
+    '.title-content' : '%title',
+    '.button' : { $each : { button : 'data.buttons' },
+      $in : 'button',
+      '@text': '.label',
+      $setup: function() {
+        var elem = this;
+        var controller = Template.access('data.self');
+        var action = Template.access('.action');
+        var handler = Template.access('data.handler');
+        var click_action = function() {
+          handler.call(controller, action);
+        };
+        $(this).click(click_action); 
+        Template.teardown(function() { $(elem).unbind('click', click_action); });
+      }
+    }
+  }
+});
+
+Dialog = _.Class(function(type, content, buttons, handler) {
+  var self = this;
+  var model = new Template.ViewModel(_.overlay({}, content, {
+    type: type,
+    dialog: {
+      self: self,
+      buttons: buttons,
+      handler: function(arg) { 
+        var result = !handler || handler.call(this.arg);
+        if(result || undefined === result) {
+          this.close();
+        }
+      }
+    }
+  }));
+  this.data = model.data;
+  this.template = $("<div/>").appendTo($('body')).template(model, {
+    '.' : {
+      $template: '.type'
+    }
+  });
+}, {
+  proto: {
+    is_open: function() {
+      return this.hasOwnProperty('template');
+    },
+    close: function() {
+      if(this.hasOwnProperty('template')) {
+        this.template.clearTemplate().remove();
+        delete this.template;
+      }
+      delete this.data;
+    }
+  }
+});
+
+Story.Plot.Define('Dialog', function() {
+  var args = __args();
+  // maybe reprocess button into story nodes.
+  args[2] = _.map.call(this, args[2], function(button) {
+    return _.overlay(button, { action: function(action) {
+      var action = button.action;
+      if(typeof action === 'function') {
+        return action;
+      } else if(action instanceof Array) {
+        var node = Story.Plot.Build(action);
+        return Story.Plot.Register(this, node);
+      } else if(action instanceof Story.Plot) {
+        return Story.Plot.Register(this, action);
+      } else {
+        return function() {
+          this.scope.result = action;
+          this.dialog.close();
+          Story.update();
+        };
+      }
+    }.call(this, button.action) }); 
+  });
+  
+  this.create_dialog = function() {
+    var dialog = Dialog.apply(null, args);
+    var handler = dialog.data('dialog.handler')();
+    dialog.data('dialog.handler', Story.callback(function(arg) {
+      if(!(arg instanceof Story.Plot)) {
+        var result = arg.call(this);
+        if(result !== false) dialog.close();
+      } else {
+        if(this.button_node) {
+          Story.Plot.Device.teardown(this.button_node);
+        }
+        this.button_node = Story.Plot.Device.setup(arg);
+      }
+      Story.update();
+    }));
+    return dialog;
+  };
+}, {
+  setup: function() {
+    this.dialog = this.scope.dialog = this.create_dialog();
+  },
+  update: function() {
+    if(this.button_node) {
+      Story.Plot.Device.update(this.button_node);
+    }
+    return this.dialog.is_open();
+  },
+  teardown: function() {
+    if(this.button_node) {
+      Story.Plot.Device.teardown(this.button_node);
+    }
+    if(this.dialog.is_open()) {
+      this.dialog.close();
+    }
+  }
+}, { owns_scope: true });
+$('#template .basic-dialog').defineTemplate('basic-dialog', { 
+  $template : '=dialog-template',
+  '...dialog' : '.dialog',
+  '.content' : { $as : 'content', '@text' : '.content' },
+  '.title' : { $as : 'title', '@text' : '.title' }
+});
+$('#template .picture-dialog').defineTemplate('picture-dialog', { 
+  $template : '=dialog-template',
+  '...dialog' : '.dialog',
+  '.content' : { $as : 'content', '@src' : '.content' },
+  '.title' : { $as : 'title', '@text' : '.title' }
+});
+$('#template .progress-bar-template').defineTemplate('progress-bar', {
+  $template: '=screen',
+  '.progress-bar' : { $as: 'screen-content',
+    '.cancel@onclick' : '.cancel',
+    '.title' : '.title',
+    '.full@style': { width: function() {
+      // FIXME: ()() is awkward
+      var result = Template.coalesce('.percent', '=100')()();
+      return result + '%';
+    } }
+  }
+});
+ProgressBar = _layer.Class(function(title) {
+  var self = this;
+  var model = new Template.ViewModel({
+    title: title,
+    percent: 0,
+    cancel: function() { self.close(); }
+  });
+  this.data = model.data;
+  this.progress = $("<div/>").appendTo($('body')).template(model, {
+    '.' : {
+      $template: '=progress-bar'
+    }
+  });
+}, { 
+  proto: {
+    is_open: function() {
+      return this.hasOwnProperty('progress');
+    },
+    close: function() {
+      if(this.hasOwnProperty('progress')) {
+        this.progress.clearTemplate().remove();
+        delete this.progress;
+      }
+      delete this.data;
+    }
+  }
+})
+Flickr = _.Class(function(options) {
+  this.api_key = options.api_key || "413f61e261590b66bdddf390c1b50b80";
+  this.api_secret = options.api_secret || "e1a887140689b8ad";
+  this.state = {}; 
+}, {
+  cancel_request: function() {
+    if(this.hasOwnProperty('xhr')) {
+      this.xhr.cancel();
+      delete this.xhr;
+    }
+  },
+  getFrob: function(callback) {
+    this.cancel_request();
+    return request('flickr.auth.getFrob', function(result, status, xhr) {
+      this.state = { 
+        name: 'frob',
+        frob: result.frob._content
+      };
+      callback.call(this, true);
+    }, function() {
+      callback.call(this, false);
+    });
+  },
+  getToken: function(callback) {
+    if(!this.state.name == "frob") throw new Error("need to be frobbin to get token");
+     
+    return request('flickr.auth.getToken', function(result, status, xhr) {
+      this.state = {};
+      this.token = result.data.auth.token._content;
+      callback.call(this, true);
+    }, function() {
+      callback.call(this, false);
+    });
+  },
+  request: function(method, data, callback, error, ajax_options) {
+    var self = this;
+    this.xhr = jQuery.ajax(_.overlay({ 
+      cache: true,
+      url: 'http://api.flickr.com/services/rest/',
+      data: this.sign(_.overlay({
+        method: method,
+        format: 'json'
+      }, data || {})),
+      dataType: 'jsonp',
+      jsonp: false,
+      jsonpCallback: 'jsonFlickrApi',
+      success: function() {
+        if(callback) callback.apply(self, arguments);
+      },
+      error: function() {
+        if(error) error.apply(self, arguments);
+      },
+      timeout: 1000*10
+    }, ajax_options || {}));
+  },
+  sign: function(request) {
+    request = _.overlay({}, request, {
+       api_key: this.api_key,
+    });
+    var keys = Object.keys(request).sort();
+    var signature_string = this.api_secret;
+    var querys = [];
+    _.each(keys, function(key) {
+      var value = request[key];
+      signature_string += key;
+      signature_string += value;
+      querys.push(key + '=' + value);
+    });
+    var api_sig = hex_md5(signature_string);
+    querys.push('api_sig=' + api_sig);
+    return querys.join('&');
+  }
+}, {
+  
+});
+Story.Plot.Define('Flickr', function(method, data, options) {
+  this.ajax_options = options;
+  this.data = data;
+  this.method = method;
+}, {
+  setup: function() {
+    if(typeof this.data === 'function') this.data = this.data.call(this);
+
+    this.xhr = jQuery.ajax(_.overlay({ 
+      cache: true,
+      url: 'http://api.flickr.com/services/rest/',
+      data: Flickr.Sign(_.overlay({
+        method: this.method,
+        format: 'json'
+      }, this.data || {})),
+      dataType: 'jsonp',
+      jsonp: false,
+      jsonpCallback: 'jsonFlickrApi',
+      success: Story.callback(function(data, status) {
+        this.xhr.abort();
+        this.scope.data = data;
+        this.scope.result = status;
+        this.done = true;
+        Story.update();
+      }),
+      error: Story.callback(function(xhr, status) {
+        this.scope.result = status;
+        this.done = true;
+        Story.update();
+      }),
+      timeout: 1000*10
+    }, this.ajax_options || {}));
+  },
+  update: function() {
+    return !this.done;
+  },
+  teardown: function() {
+    delete window.jsonFlickrApi;
+    if(!this.done) {
+      this.xhr.abort();
+    }
+  }
+});
+
+$('#template .message-template').defineTemplate('message-template', {
+  $template: Template.coalesce('.container', '=screen'),
+  $let : { message: '...message' },
+  '.message' : {
+    $as : 'screen-content',
+    '@text' : 'message'
+  }
+});
+
+Message = _layer.Class(function(content) {
+  var self = this;
+  var model = new Template.ViewModel({
+    message: content
+  });
+  this.data = model.data;
+  this.template = $("<div/>").appendTo($('body')).template(model, {
+    '.' : {
+      $template: '=message-template',
+      '...message' : '.message'
+    }
+  });
+}, { 
+  proto: {
+    is_open: function() {
+      return this.hasOwnProperty('template');
+    },
+    close: function() {
+      if(this.hasOwnProperty('template')) {
+        this.template.clearTemplate().remove();
+        delete this.template;
+      }
+      delete this.data;
+    }
+  }
+});
+
+Story.Plot.Define('Message', function(message) {
+  this.create_dialog = function() {
+    var themessage = message;
+    if(typeof themessage === 'function') {
+      themessage = themessage.call(this);
+    }
+    var dialog = new Message(themessage);
+    return dialog;
+  }
+}, {
+  setup: function() {
+    this.dialog = this.create_dialog();
+  },
+  teardown: function() {
+    if(this.dialog.is_open()) {
+      this.dialog.close();
+    }
+  }
+});
+$('#template .image-loader').defineTemplate('image-loader', {
+  'canvas' : {
+    $let : {
+      width: Template.coalesce('.width', "=100"), 
+      height: Template.coalesce('.height', "=100")
+    },
+    '@width':  '=%{width}',
+    '@height': '=%{height}',
+    '.': function() {
+      var width = Template.access('width');
+      var height = Template.access('height');
+      var ctx = this[0].getContext('2d');
+      ctx.fillStyle = 'white';
+      ctx.fillRect(0,0,width,height);
+      ctx.fillStyle = 'black';
+      ctx.fillRect(0,0,width/2,height/2);
+    },
+    "@ondragover" : _.constant(false),
+    "@ondragenter" : function(event) {
+      return false;
+    },
+    "@ondrop" : function(event) {
+      try {
+        event = event.originalEvent;
+        if(event.dataTransfer.files.length == 0) return false;
+        var file = event.dataTransfer.files[0];
+        var image = new Image();
+        image.onload = Template.callback(function(ctx) {
+          var width = this.width, height = this.height;
+          if(width > 300) {
+            height = Math.floor(height*(300/width));
+            width = 300;
+          }
+          if(height > 300) {
+            width = Math.floor(width*(300/height));
+            height = 300;
+          }
+          Template.update('.width', width);
+          Template.update('.height', height);
+          ctx.drawImage(this, 0, 0, width, height);
+          this.onload = _.noop;
+          this.src = '';
+        }.bind(image, this.getContext('2d')));
+        var reader = new FileReader();
+        reader.onload = function(evt) {
+          image.src = evt.target.result;
+        };
+        reader.readAsDataURL(file);
+      } finally { return false; }
+    }
+  }
+});
+$('#template .empty').defineTemplate('empty', {});
+var main_content = new Template.ViewModel({template:'empty'});
+$('.main-content .template').template(main_content, {
+  '.': {
+    $template: '.template',
+    $in: '.data'
+  }
+});
+
+function SetMainContent(template, data) {
+  main_content.locked(function() {
+    this.data('template', template);
+    this.data('data', data);
+  });
+}
+$('#template .flickr-photos').defineTemplate('flickr-photos', {
+  '.photo' : { $each: { photo: '.photos.photo' },
+    '@src' : 'photo.url_m'
+  }
+});
+var DialogStory = new Story(Story.Dialog('basic-dialog', {
+  content: 'This is a test dialog',
+  title: 'Testing... 1. 2. 3.'
+}, [
+  { label: 'login', action: [ '@flickr',
+    [
+      {
+        setup: function() {
+          this.popup = this.scope.popup = window.open('/popup', 'authenticate', _.join({
+            width: 800,
+            height: 800,
+            screenX: 200,
+            screenY: 200,
+            toolbar: 'no',
+            location: 'no',
+            status: 'no',
+            copyhistory: 'no',
+            scrollbars: 'yes'
+          }, ['=',',']));
+          this.popup.onclose = function() { alert('BANG!'); };
+        },
+        teardown: function() {
+          if(!this.popup.closed) this.popup.close();
+        }
+      },
+      [
+        Story.Flickr('flickr.auth.getFrob', {
+        }, { timeout: 5000 }),
+        Story.Switch({
+          success: [
+            Story.Live(500, Story.Message(
+              'Close the Flickr Auth Popup to Continue'
+            ), { 
+              setup: function() {
+                var url = 'http://flickr.com/services/auth';
+                var params = { 
+                  api_key: Flickr.api_key,
+                  perms: 'read',
+                  frob: this.scope.data.frob._content
+                };
+                this.scope.popup.location = url + '?' + Flickr.Sign(params)
+              }, 
+              update: function() {
+                return !this.scope.popup.closed;
+              } 
+            }),
+            Story.Flickr('flickr.auth.getToken', function() {
+              return {frob: this.scope.data.frob._content}
+            }),
+            function() {
+              this.scope.api_key = this.scope.data.auth.token._content; 
+              this.scope.user = this.scope.data.auth.user;
+            },
+            [Story.Flickr('flickr.photos.search', function() {
+              return {
+                api_key: this.scope.api_key, 
+                user_id: this.scope.user.nsid,
+                extras: 'url_m',
+                safe_search: 1
+              };
+            }), Story.Message(function() { 
+              return 'Loading Photos for ' + this.scope.user.fullname + '...';
+            })],
+            function() {
+              this.scope.dialog.data('photos', 
+                this.scope.data.photos
+              );
+              this.scope.dialog.data('type', 'flickr-photos');
+              this.scope.dialog.data('dialog.buttons', [{
+                label: 'close',
+                action: function() { this.scope.dialog.close(); }
+              }]); 
+            }
+          ],
+          '*': [
+            Story.Message("Error!"),
+            Story.Delay(3000)
+          ]
+        })
+      ]
+    ]
+  ]}
+]));
+var canvas_model = new Template.ViewModel({width: 400, height: 300});
+$('<div/>').appendTo('body').template(canvas_model, {
+  '.' : { $template: '=image-loader' }
+});
+$('<button>dialog</button>')
+.click(function() {
+  DialogStory.tell();
+})
+.appendTo($('body'));
+
+</script>
+</html>

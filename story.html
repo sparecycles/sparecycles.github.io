@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>
+story.js
+
+</title>
+<script src='storyjs/json2.js' type='text/javascript'></script>
+<script src='storyjs/story/layer.js' type='text/javascript'></script>
+<script src='storyjs/story/story.js' type='text/javascript'></script>
+<script src='storyjs/story/plot.js' type='text/javascript'></script>
+<script src='storyjs/jquery-1.5.2.js' type='text/javascript'></script>
+<script src='storyjs/story/jquery-1.5-hack.js' type='text/javascript'></script>
+<script src='storyjs/story/template.js' type='text/javascript'></script>
+<script src='storyjs/prettify.js' type='text/javascript'></script>
+<script src='connect4.js' type='text/javascript'></script>
+<link href='storyjs/prettify.css' rel='stylesheet' type='text/css'>
+<link href='style/index.css' rel='stylesheet' type='text/css'>
+
+<style type='text/css'>
+
+</style>
+</head>
+<body>
+<div id='template' style='display:none'>
+
+</div>
+<div id='container'>
+<div id='content'>
+<h1 id='Story'>
+Story
+</h1>
+<pre class='main-example prettyprint'>Connect4Story = Story([&#x000A;  [&#x000A;    {&#x000A;      setup: function() {&#x000A;        Story.write('game', new Connect4(5,5));&#x000A;      },&#x000A;    }, Story.Ignore(Story.Loop(&#x000A;      { setup: function() {&#x000A;        DrawGame("Red's turn", Story.read('game'), Story.read('target'));&#x000A;        $('.column', Story.read('target')).each(function(index) {&#x000A;          $(this).unbind('click').click(Story.callback(function() {&#x000A;            var game = Story.read('game');&#x000A;            if(game.can_move(index)) game.move("red", index);&#x000A;            this.moved = true;&#x000A;          }));&#x000A;        });&#x000A;      }, update: function() { &#x000A;        return !this.moved; &#x000A;      }, teardown: function() { &#x000A;        Story.read('target').contents().remove(); &#x000A;      } },&#x000A;      { setup: function() {&#x000A;        DrawGame("Blue's turn", Story.read('game'), Story.read('target'));&#x000A;        $('.column', Story.read('target')).each(function(index) {&#x000A;          $(this).unbind('click').click(Story.callback(function() {&#x000A;            var game = Story.read('game');&#x000A;            if(game.can_move(index)) game.move("blue", index);&#x000A;            this.moved = true;&#x000A;          }));&#x000A;        });&#x000A;      }, update: function() { &#x000A;        return !this.moved; &#x000A;      }, teardown: function() { &#x000A;        Story.read('target').contents().remove(); &#x000A;      } }&#x000A;    )), function() {&#x000A;      var winner = Story.read('game').winner();&#x000A;      if(winner) Story.write('winner', winner);&#x000A;      return !winner;&#x000A;    }&#x000A;  ], &#x000A;  function() {&#x000A;    var target = Story.read('target');&#x000A;    DrawGame(Story.read('winner') + ' won!', Story.read('game'), target);&#x000A;    jQuery('&lt;button/&gt;')&#x000A;      .text("Play Again?")&#x000A;      .click(function() {&#x000A;        Connect4Story.tell({ target: target });&#x000A;      })&#x000A;      .prependTo(Story.read('target').find('.connect4'));&#x000A;  }&#x000A;]);</pre>
+<div class='main'>
+<p class='large-font'>
+Lightweight, simple, scalable, modular metascripting.
+Linearizes and abstracts callback chains.
+Makes complex flow simple.
+</p>
+<p>
+Story is a modular framework for handling asynchronous events.
+</p>
+<div class='target'></div>
+<p>
+To learn more, please see the <a href='/litijs?story'>API docs</a>.
+</p>
+</div>
+<script>
+  function DrawGame(caption, game, target) {
+    target.contents().remove();
+    var columns = [];
+    target.appendText(caption);
+    var c4 = jQuery('<div class="connect4"/>').appendTo(target);
+    for(var col = 0; col < game.columns.length; col++) {
+      var column = jQuery('<div class="column"/>').appendTo(c4);
+      for(var row =  game.rows-1; row >= 0; row--) {
+        jQuery('<div class="cell-content"/>').appendTo(
+          jQuery('<div class="cell"/>').appendTo(column)
+        ).addClass(game.columns[col][row]);
+      }
+    }
+  };
+  Connect4Story = Story([
+    [
+      {
+        setup: function() {
+          Story.write('game', new Connect4(5,5));
+        },
+      }, Story.Ignore(Story.Loop(
+        { setup: function() {
+          DrawGame("Red's turn", Story.read('game'), Story.read('target'));
+          $('.column', Story.read('target')).each(function(index) {
+            $(this).unbind('click').click(Story.callback(function() {
+              var game = Story.read('game');
+              if(game.can_move(index)) game.move("red", index);
+              this.moved = true;
+            }));
+          });
+        }, update: function() { 
+          return !this.moved; 
+        }, teardown: function() { 
+          Story.read('target').contents().remove(); 
+        } },
+        { setup: function() {
+          DrawGame("Blue's turn", Story.read('game'), Story.read('target'));
+          $('.column', Story.read('target')).each(function(index) {
+            $(this).unbind('click').click(Story.callback(function() {
+              var game = Story.read('game');
+              if(game.can_move(index)) game.move("blue", index);
+              this.moved = true;
+            }));
+          });
+        }, update: function() { 
+          return !this.moved; 
+        }, teardown: function() { 
+          Story.read('target').contents().remove(); 
+        } }
+      )), function() {
+        var winner = Story.read('game').winner();
+        if(winner) Story.write('winner', winner);
+        return !winner;
+      }
+    ], 
+    function() {
+      var target = Story.read('target');
+      DrawGame(Story.read('winner') + ' won!', Story.read('game'), target);
+      jQuery('<button/>')
+        .text("Play Again?")
+        .click(function() {
+          Connect4Story.tell({ target: target });
+        })
+        .prependTo(Story.read('target').find('.connect4'));
+    }
+  ]);
+  
+  Connect4Story.tell({ target: jQuery('.target') })
+</script>
+
+</div>
+</div>
+</body>
+<script type='text/javascript'>
+jQuery(function($) {
+  $('body').addClass('loaded');
+  prettyPrint();
+});
+
+</script>
+</html>

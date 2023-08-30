@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>
+Litijs Documentation
+
+</title>
+<script src='storyjs/json2.js' type='text/javascript'></script>
+<script src='storyjs/story/layer.js' type='text/javascript'></script>
+<script src='storyjs/story/story.js' type='text/javascript'></script>
+<script src='storyjs/story/plot.js' type='text/javascript'></script>
+<script src='storyjs/jquery-1.5.2.js' type='text/javascript'></script>
+<script src='storyjs/story/jquery-1.5-hack.js' type='text/javascript'></script>
+<script src='storyjs/story/template.js' type='text/javascript'></script>
+<script src='storyjs/prettify.js' type='text/javascript'></script>
+<script src='storyjs/story/litijs.js' type='text/javascript'></script>
+<link href='storyjs/prettify.css' rel='stylesheet' type='text/css'>
+<link href='storyjs/litijs.css' rel='stylesheet' type='text/css'>
+<link href='/humans.txt' rel='author' type='text/plain'>
+
+<style type='text/css'>
+
+</style>
+</head>
+<body>
+<div id='template' style='display:none'>
+
+</div>
+<div id='container'>
+<div id='content'>
+
+</div>
+</div>
+</body>
+<script type='text/javascript'>
+var file = ({
+  litijs: 'storyjs/story/litijs.js',
+  template: 'storyjs/story/template.js',
+  plot: 'storyjs/story/plot.js',
+  story: 'storyjs/story/story.js',
+  layer: 'storyjs/story/layer.js',
+})[window.location.search.slice(1)] || 'storyjs/story/story.js';
+
+Litijs($('body'), file, function() {
+  if(window.location.hash) {
+    var element = document.getElementById('litijs.' + window.location.hash.slice(1));
+    if(element) {
+      window.scrollTo(0, $(element).offset().top);
+    } else debugger;
+  }
+});
+
+</script>
+</html>

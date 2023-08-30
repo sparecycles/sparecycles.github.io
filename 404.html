@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>
+
+</title>
+<script src='storyjs/jquery-1.5.2.js' type='text/javascript'></script>
+<link href='/humans.txt' rel='author' type='text/plain'>
+
+<style type='text/css'>
+* { margin: 0 }
+
+</style>
+</head>
+<body>
+<div id='template' style='display:none'>
+
+</div>
+<div id='container'>
+<div id='content'>
+<table>
+<td style='text-align: center; font-size: 2em; font-weight: bold; font-family: sans-serif'>
+enum { False, True, FileNotFound = 404 };
+</td>
+</table>
+<script>
+  $('body').click(function() {
+    window.location = "/";
+  });
+  $(window).resize(function() {
+    $('table').css({
+      width: $(window).width(),
+      height: $(window).height()
+    });
+  }).resize();
+</script>
+
+</div>
+</div>
+</body>
+<script type='text/javascript'>
+
+</script>
+</html>

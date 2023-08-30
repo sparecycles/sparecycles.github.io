@@ -1,0 +1,178 @@
+.litijs-container{
+  width:1000px;
+  margin:0 auto;
+}
+.litijs a[href],
+.litijs a[href]:visited,
+.litijs a[href]:active,
+.litijs a[href]:hover {
+  color:#333;
+  font-weight:900;
+}
+body {
+  font-family:
+	"HelveticaNeue-Light",
+  	"Helvetica Neue",
+	Helvetica,
+	Arial,
+	Verdana,
+	sans-serif;
+  color:#333;
+  background-color:#FAFAFF;
+}
+.litijs p{
+  font-weight:300;
+  width:600px;
+  line-height:1.4em;
+}
+.litijs .prettyprint{
+  width:600px;
+}
+.litijs pre {
+  background: url("../images/code_bg.gif") repeat scroll 0 0 white;
+  -moz-box-shadow: 3px 3px 6px #666;
+  -webkit-box-shadow: 3px 3px 6px #666;
+  box-shadow: 3px 3px 6px #666;
+  line-height: 20px;
+  font-size: 14px;
+  margin:0;
+  padding:0;
+  padding-left: 30px;
+  margin-right: 5px;
+  border: 1px solid black;
+}
+.litijs .wrapper pre {
+  border: none;
+  border-left: 1px solid black;
+  float:right;
+  width:590px;
+}
+.litijs .section .wrapper:first-child pre {
+  border-top: 1px solid black;
+}
+.litijs .section .wrapper:last-child pre {
+  border-bottom: 1px solid black;
+}
+
+.litijs .wrapper .note p{
+  width:300px;
+  font-size:14px;
+  margin: 0;
+}
+.litijs .wrapper .note{
+  float:left;
+  margin: 0px;
+}
+.litijs .wrapper{
+  overflow:hidden;
+  width:930px;
+}
+.litijs .section{
+  display: block;
+}
+h1,
+h2{
+    font-weight: 700;
+    text-shadow: 1px 1px 1px #CCCCCC;
+}
+
+.litijs .wrapper:last-child pre {
+  /* background: red;*/
+padding-bottom:10px;
+}
+button{
+    -moz-border-radius: 0.5em 0.5em 0.5em 0.5em;
+    -moz-box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    background: -moz-linear-gradient(center top , #888888, #575757) repeat scroll 0 0 transparent;
+    -webkit-border-radius: 0.5em 0.5em 0.5em 0.5em;
+    -webkit-box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    background: -webkit-gradient(
+       linear,
+       left bottom,
+       left top,
+       color-stop(0, #575757),
+       color-stop(.8, #888888)
+    ) repeat scroll 0 0 transparent;
+    border-radius: 0.5em 0.5em 0.5em 0.5em;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    display: inline-block;
+    margin: 0 2px;
+    outline: medium none;
+    text-align: center;
+    padding: 3px 10px;
+    text-decoration: none;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
+    vertical-align: baseline;
+    border: 1px solid #555555;
+    color: #E9E9E9;
+}
+button:active {
+    -moz-border-radius: 0.5em 0.5em 0.5em 0.5em;
+    -moz-box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    background: -moz-linear-gradient(center top, #575757, #888888) repeat scroll 0 0 transparent;
+    -webkit-border-radius: 0.5em 0.5em 0.5em 0.5em;
+    -webkit-box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    background: -webkit-gradient(
+       linear,
+       left bottom,
+       left top,
+       color-stop(0, #888888),
+       color-stop(.8, #575757)
+    ) repeat scroll 0 0 transparent;
+}
+
+.litijs .haml {
+	margin: 2ex;
+	border-top:  2px solid gray;
+	border-bottom:  2px solid gray;
+	border-radius: 20px;
+	padding: 10px;
+    width: 600px;
+}
+
+.litijs .definitions {
+	display: table;
+	border-top:  2px solid gray;
+	border-bottom:  2px solid gray;
+	border-radius: 20px;
+}
+
+.litijs .definitions .entry {
+	border: none;
+	overflow: hidden;
+	display: table-row;
+}
+.litijs .definitions .entry:first-child {
+}
+.litijs .definitions .entry:last-child {
+}
+
+.litijs .definitions .entry .term {
+	width: 30%;
+	padding-right: 10%;
+    text-align: right;
+	display: table-cell;
+}
+
+.litijs .definitions .entry .definition {
+	width: 60%;
+    text-align: left;
+	display: table-cell;
+}
+
+.litijs .target {
+  border-radius: 40px;
+  width: 40px;
+  height: 40px;
+  background-color: blue;
+  display: inline-block;
+  margin-bottom: -12px;
+  margin-top: 10px;
+  margin-left: 10px;
+}
+
+.litijs button:disabled {
+	background:lightgray;
+    border:1px solid #ddd;
+}
